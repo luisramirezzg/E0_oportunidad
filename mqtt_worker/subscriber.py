@@ -13,7 +13,7 @@ HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT"))
 USER = os.getenv("USER")
 PASSWORD = os.getenv("PASSWORD")
-TOPIC = "stock/updates"
+TOPIC = "stocks/updates"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Conexión y escritura a la base de datos

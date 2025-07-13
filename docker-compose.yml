@@ -18,7 +18,7 @@ services:
     container_name: stock-api
     restart: always
     ports:
-      - "8090:8000"
+      - "8090:8000"  # Acceso directo para debug
     env_file:
       - .env
     depends_on:
@@ -34,15 +34,42 @@ services:
     build: .
     container_name: mqtt-worker
     restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
     command: >
       bash -c "
       sleep 5 &&
       python mqtt_worker/subscriber.py
       "
-    env_file:
-      - .env
-    depends_on:
-      - db
 
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - api-server
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "certbot certonly --webroot -w /var/www/certbot
+      --email lucho123hrg@gmail.com
+      --agree-tos
+      --no-eff-email
+      -d e0.finask.me"
+      
 volumes:
   postgres_data:
