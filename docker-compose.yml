@@ -1,9 +1,48 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  web:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: stockdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api-server:
+    build: .
+    container_name: stock-api
+    restart: always
     ports:
       - "8090:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: >
+      bash -c "
+      sleep 3 &&
+      python create_tables.py &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+
+  mqtt-worker:
+    build: .
+    container_name: mqtt-worker
+    restart: always
+    command: >
+      bash -c "
+      sleep 5 &&
+      python mqtt_worker/subscriber.py
+      "
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
