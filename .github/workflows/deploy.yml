@@ -13,6 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Debug Private Key Length (opcional)
+        run: echo "${{ secrets.EC2_KEY }}" | wc -l
+
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.1
         with:
@@ -22,6 +25,11 @@ jobs:
           port: 22
           source: "."
           target: "/home/ubuntu/app"
+          strip_components: 0
+          overwrite: true
+          timeout: 60s
+          command_timeout: 10m
+          debug: true
 
       - name: Restart Docker Compose
         uses: appleboy/ssh-action@v1.0.0
@@ -32,6 +40,5 @@ jobs:
           port: 22
           script: |
             cd /home/ubuntu/app
-            docker-compose down
+            docker-compose down || true
             docker-compose up -d --build
-
